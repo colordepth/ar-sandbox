@@ -91,7 +91,7 @@ public class DummyMesh : MonoBehaviour
         mesh.triangles = triangles;
         mesh.uv = uv;
         mesh.colors32 = colors;
-        mesh.RecalculateNormals();
+        // mesh.RecalculateNormals();
         // mesh.RecalculateBounds();
         // mesh.RecalculateTangents();
         // Debug.Log("Min Z: " + minZ + ", Max Z: " + maxZ);
@@ -118,7 +118,7 @@ public class DummyMesh : MonoBehaviour
 
             if (
                 decimalVal < contourThickness &&    // Check if we lie in the contour region
-                colorIndexInt < nColors - 1          // Do not try to contour near top region
+                colorIndexInt < nColors             // Do not try to contour near top region
                )
                 return contourColor;
         }
