@@ -94,7 +94,6 @@ public class DummyMesh : MonoBehaviour
         // mesh.RecalculateNormals();
         // mesh.RecalculateBounds();
         // mesh.RecalculateTangents();
-        // Debug.Log("Min Z: " + minZ + ", Max Z: " + maxZ);
         timestep += Time.smoothDeltaTime / 2f;
     }
 
@@ -125,5 +124,13 @@ public class DummyMesh : MonoBehaviour
 
         // Heightmap coloring
         return heightmapColors[colorIndexInt];
+    }
+
+    Color32 getVertexColorFromGradient(float z)
+    {
+        float normalizedZ = (z - minZ) / (maxZ - minZ + 0.0001f);    // = [0, 1)
+        float colorIndexFloat = normalizedZ * (heightmapColors.Length-1);
+        int colorIndex = (int)colorIndexFloat;
+        return Color.Lerp(heightmapColors[colorIndex], heightmapColors[colorIndex + 1], colorIndexFloat - colorIndex);
     }
 }
