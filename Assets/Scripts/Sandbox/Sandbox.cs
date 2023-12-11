@@ -67,5 +67,11 @@ public class Sandbox : MonoBehaviour
         {
             terrainmesh.transform.localScale += Vector3.right * 0.01f;
         }
+
+        // Lock bound range
+        if (Input.GetKeyUp(KeyCode.L) && terrainmesh is KinectMesh)
+        {
+            ((KinectMesh)terrainmesh).lockBoundRange ^= true;
+        }
     }
 }

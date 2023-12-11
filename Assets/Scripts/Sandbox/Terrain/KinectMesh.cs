@@ -7,6 +7,7 @@ public class KinectMesh : TerrainMesh
     private int width;
     private int height;
 
+    public bool lockBoundRange = false;
     public int Width { get { return width; } }
     public int Height { get { return height; } }
 
@@ -55,8 +56,11 @@ public class KinectMesh : TerrainMesh
                 int i = x + y * Width;
                 float z = iKinect.DepthData[i] * DepthScalingFactor;
 
-                minZ = Mathf.Min(z, minZ);
-                maxZ = Mathf.Max(z, maxZ);
+                if (!lockBoundRange)
+                {
+                    minZ = Mathf.Min(z, minZ);
+                    maxZ = Mathf.Max(z, maxZ);
+                }
 
                 vertices[i].z = z;
                 colors[i] = getVertexColor(z);
@@ -125,7 +129,7 @@ public class KinectMesh : TerrainMesh
         float relativeZ = (z - minZ);
         float normalizedZ = relativeZ / heightRange - 0.0001f;  // Replace with heightRange/1000f?
         float colorIndexFloat = normalizedZ * nColors;
-        int colorIndexInt = (int)colorIndexFloat;
+        int colorIndexInt = Mathf.Clamp((int)colorIndexFloat, 0, nColors-1);
 
         // Undefined. Usually because the global minZ, maxZ is undetermined.
         if (float.IsNaN(colorIndexFloat))
@@ -151,7 +155,7 @@ public class KinectMesh : TerrainMesh
     {
         float normalizedZ = (z - minZ) / (maxZ - minZ + 0.0001f);    // = [0, 1)
         float colorIndexFloat = normalizedZ * (heightmapColors.Length - 1);
-        int colorIndex = (int)colorIndexFloat;
+        int colorIndex = Mathf.Clamp((int)colorIndexFloat, 0, heightmapColors.Length - 1);
         return Color.Lerp(heightmapColors[colorIndex], heightmapColors[colorIndex + 1], colorIndexFloat - colorIndex);
     }
 }
