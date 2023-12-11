@@ -20,7 +20,7 @@ public class KinectInterface : MonoBehaviour
     /// Polls the sensor for the next depth frame.
     /// </summary>
     /// <returns>Whether new data is available.</returns>
-    private bool Poll()
+    public bool Poll()
     {
         if (depthReader != null)
         {
