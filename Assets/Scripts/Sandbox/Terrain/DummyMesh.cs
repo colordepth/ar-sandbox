@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class DummyMesh : MonoBehaviour
+public class DummyMesh : TerrainMesh
 {
     public int Width = 640;
     public int Height = 480;
@@ -27,6 +24,7 @@ public class DummyMesh : MonoBehaviour
     int[] triangles;
 
     float timestep = 0;
+    public float timescale = 1f;
 
     [SerializeField]
     float minZ, maxZ;
@@ -45,27 +43,19 @@ public class DummyMesh : MonoBehaviour
         triangles = new int[(Width - 1) * (Height - 1) * 6];
 
         GetComponent<MeshFilter>().mesh = mesh;
+        mesh.MarkDynamic();
 
         minZ = float.PositiveInfinity;
         maxZ = float.NegativeInfinity;
-    }
 
-    void Update()
-    {
         for (int y = 0; y < Height; y++)
         {
             for (int x = 0; x < Width; x++)
             {
                 int i = x + y * Width;
-                float z = (new Vector2(x, y) - new Vector2(Width / 2f, Height / 2f)).magnitude * 0 +
-                          Mathf.PerlinNoise(10f * x / (float)Width + timestep, 10f * y / (float)Height + timestep) * (float)Width / 10f;
 
-                minZ = Mathf.Min(z, minZ);
-                maxZ = Mathf.Max(z, maxZ);
-
-                vertices[i] = new Vector3(x, y, z);
+                vertices[i] = new Vector3(x, y, 0);
                 normals[i] = new Vector3(0, 0, 1);
-                colors[i] = getVertexColor(z);
                 uv[i] = new Vector2(x / (float)Width, y / (float)Height);
 
                 if (x < Width - 1 && y < Height - 1)
@@ -90,11 +80,32 @@ public class DummyMesh : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uv;
+    }
+
+    void Update()
+    {
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                int i = x + y * Width;
+                float z = // (new Vector2(x, y) - new Vector2(Width / 2f, Height / 2f)).magnitude*0.01f +
+                          Mathf.PerlinNoise(10f * x / (float)Width + timestep, 10f * y / (float)Height + timestep) * (float)Width / 10f;
+
+                minZ = Mathf.Min(z, minZ);
+                maxZ = Mathf.Max(z, maxZ);
+
+                vertices[i].z = z;
+                colors[i] = getVertexColor(z);
+            }
+        }
+
+        mesh.vertices = vertices;
         mesh.colors32 = colors;
         // mesh.RecalculateNormals();
         // mesh.RecalculateBounds();
         // mesh.RecalculateTangents();
-        timestep += Time.smoothDeltaTime / 2f;
+        timestep += timescale * Time.smoothDeltaTime / 2f;
     }
 
     Color32 getVertexColor(float z)
