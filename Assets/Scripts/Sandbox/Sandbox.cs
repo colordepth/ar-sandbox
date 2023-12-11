@@ -30,22 +30,22 @@ public class Sandbox : MonoBehaviour
 
         if (Input.GetKey(KeyCode.W))
         {
-            terrainmesh.transform.position += Vector3.forward;
+            terrainmesh.transform.position += Vector3.forward * 10f;
         }
 
         if (Input.GetKey(KeyCode.S))
         {
-            terrainmesh.transform.position += Vector3.back;
+            terrainmesh.transform.position += Vector3.back * 10f;
         }
 
         if (Input.GetKey(KeyCode.A))
         {
-            terrainmesh.transform.position += Vector3.left;
+            terrainmesh.transform.position += Vector3.left * 10f;
         }
 
         if (Input.GetKey(KeyCode.D))
         {
-            terrainmesh.transform.position += Vector3.right;
+            terrainmesh.transform.position += Vector3.right * 10f;
         }
 
         if (Input.GetKey(KeyCode.UpArrow))
