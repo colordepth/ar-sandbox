@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using Windows.Kinect;
 
 /// <summary>
@@ -16,6 +17,23 @@ public class KinectInterface : MonoBehaviour
 
     public int FrameHeight { get; private set; }
 
+    public static double GetMedian(ushort[] sourceNumbers)
+    {
+        //Framework 2.0 version of this method. there is an easier way in F4        
+        if (sourceNumbers == null || sourceNumbers.Length == 0)
+            throw new System.Exception("Median of empty array not defined.");
+
+        //make sure the list is sorted, but use a new array
+        ushort[] sortedPNumbers = (ushort[])sourceNumbers.Clone();
+        Array.Sort(sortedPNumbers);
+
+        //get the median
+        int size = sortedPNumbers.Length;
+        int mid = size / 2;
+        double median = (size % 2 != 0) ? (double)sortedPNumbers[mid] : ((double)sortedPNumbers[mid] + (double)sortedPNumbers[mid - 1]) / 2;
+        return median;
+    }
+
     /// <summary>
     /// Polls the sensor for the next depth frame.
     /// </summary>
@@ -25,10 +43,12 @@ public class KinectInterface : MonoBehaviour
         if (depthReader != null)
         {
             DepthFrame depthframe = depthReader.AcquireLatestFrame();
+
             if (depthframe != null)
             {
                 depthframe.CopyFrameDataToArray(DepthData);
                 depthframe.Dispose();
+                // Debug.Log(GetMedian(DepthData));
                 return true;
             }
         }
@@ -48,18 +68,30 @@ public class KinectInterface : MonoBehaviour
             return;
         }
 
+        if (!kinect.IsOpen)
+            kinect.Open();
+
         depthReader = kinect.DepthFrameSource.OpenReader();
 
         FrameDescription depthFrameAttribs = depthReader.DepthFrameSource.FrameDescription;
         this.FrameWidth = depthFrameAttribs.Width;
         this.FrameHeight = depthFrameAttribs.Height;
 
+        Debug.Log(depthFrameAttribs.HorizontalFieldOfView);
+        Debug.Log(depthFrameAttribs.VerticalFieldOfView);
+        Debug.Log(depthFrameAttribs.DiagonalFieldOfView);
+        Debug.Log(depthFrameAttribs.BytesPerPixel);
+
         // Allocate memory for depth image
         this.DepthData = new ushort[depthFrameAttribs.LengthInPixels];
+
+        print("Kinect found!");
     }
 
     void Destroy()
     {
+        Debug.Log("Destroying KinectInterface");
+
         if (depthReader != null)
         {
             depthReader.Dispose();
