@@ -52,7 +52,7 @@ public class Sandbox : MonoBehaviour
 
         if (Input.GetKey(KeyCode.W))
         {
-            terrainmesh.transform.position += Vector3.forward * 100f * Time.smoothDeltaTime;\
+            terrainmesh.transform.position += Vector3.forward * 100f * Time.smoothDeltaTime;
             WriteConfig();
         }
 
