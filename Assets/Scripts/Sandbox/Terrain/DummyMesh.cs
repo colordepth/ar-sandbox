@@ -30,8 +30,31 @@ public class DummyMesh : TerrainMesh
     public Color32 pointColor = Color.black;
     List<Point> points;
 
+    public int lineSize = 5;
+    public Color32 lineColor = Color.black;
     List<Line> lines;
+
+    public int polygonSize = 5;
+    public Color32 polygonColor = Color.black;
     List<Polygon> polygons;
+
+    void initializeShapes()
+    {
+        points = new List<Point>();
+        points.Add(new Point(new Vector3(0.1f, 0.2f, 0.5f), pointSize, pointColor, "circle"));
+
+        lines = new List<Line>();
+        Vector3[] initHandles =
+        {
+            new Vector3(0.2f, 0.6f, 0.5f),
+            new Vector3(0.4f, 0.1f, 0.5f),
+            new Vector3(0.5f, 0.5f, 0.5f),
+            new Vector3(0.9f, 0.35f, 0.5f)
+        };
+        lines.Add(new Line(initHandles, lineSize, lineColor, "solid"));
+
+        polygons = new List<Polygon>();
+    }
 
     void Start()
     {
@@ -40,10 +63,7 @@ public class DummyMesh : TerrainMesh
 
         transform.position = new Vector3(-Width / 2f, -Height / 2f, 0);
 
-        points = new List<Point>();
-        points.Add(new Point(new Vector3(0.1f, 0.2f, 0.5f), pointSize, pointColor, "circle"));
-        lines = new List<Line>();
-        polygons = new List<Polygon>();
+        initializeShapes();
 
         vertices = new Vector3[Width * Height];
         normals = new Vector3[Width * Height];
@@ -128,13 +148,17 @@ public class DummyMesh : TerrainMesh
     void drawShapes(ref Color32[] colors)
     {
         // colors[i] = drawAllPolygons();
-        // colors[i] = drawAllLines();
+        drawAllLines(ref colors);
         drawAllPoints(ref colors);
     }
 
     void drawAllPolygons(ref Color32[] colors) { }
 
-    void drawAllLines(ref Color32[] colors) { }
+    void drawAllLines(ref Color32[] colors)
+    {
+        foreach (var line in lines)
+            renderLinePath(line, ref colors);
+    }
 
     void drawAllPoints(ref Color32[] colors)
     {
@@ -142,20 +166,78 @@ public class DummyMesh : TerrainMesh
             renderPoint(point, ref colors);
     }
 
+    void renderLinePath(Line line, ref Color32[] colors)
+    {
+        for (int i = 0; i < line.handles.Length - 1; i++)
+        {
+            renderPoint(new Point((Vector3)line.handles[i], 5, Color.red, "circle"), ref colors);
+            renderLineSegment(line.handles[i], line.handles[i + 1], line, ref colors);
+        }
+    }
+
+    void renderLineSegment(Vector3 A, Vector3 B, Line line, ref Color32[] colors)
+    {
+        Vector2 ptA = new Vector2(Mathf.Round(A.x * Width), Mathf.Round(A.y * Height));
+        Vector2 ptB = new Vector2(Mathf.Round(B.x * Width), Mathf.Round(B.y * Height));
+
+        Vector2 left;
+        Vector2 right;
+        if (ptA.x < ptB.x)
+        {
+            left = ptA;
+            right = ptB;
+        }
+        else
+        {
+            left = ptB;
+            right = ptA;
+        }
+
+        // line segment of size(width) 1
+        colors[getIndex(left.x, left.y)] = line.color;
+        int prevY = (int)left.y;
+        for (int x = (int)left.x + 1; x < (int)left.x; x++)
+        {
+            if (gradientChange(left, right, x, (float)(prevY + 0.5)) >= 0)
+            {
+                colors[getIndex(x, prevY + 1)] = line.color;
+                prevY++;
+            }
+            else
+            {
+                colors[getIndex(x, prevY)] = line.color;
+            }
+        }
+    }
+
+    int getIndex(float x, float y)
+    {
+        return ((int)(x + y * Width));
+    }
+
+    float gradientChange(Vector2 left, Vector2 right, float x, float y)
+    {
+        float slope = (right.y - left.y) / (right.x - left.x);
+        if (slope >= 0)
+            return left.y + slope * (x - left.x) - y;
+        else
+            return -(left.y + slope * (x - left.x) - y);
+    }
+
     void renderPoint(Point point, ref Color32[] colors)
     {
-        int x = (int)(point.location.x * Width);    // assuming location of points will range from 0 - 1.
-        int y = (int)(point.location.y * Height);  
-        int i = x + y * Width; 
+        int x = (int)(point.location.x * Width); // assuming location of points will range from 0 - 1.
+        int y = (int)(point.location.y * Height);
+        int i = x + y * Width;
 
         colors[i] = point.color;
 
         if (point.type == "circle")
         {
             for (int ry = -point.size; ry < point.size; ry++)
-                for (int rx = -point.size; rx < point.size; rx++)
-                    if ((rx * rx) + (ry * ry) <= point.size * point.size)
-                        colors[(x + rx) + (y + ry) * Width] = point.color;
+            for (int rx = -point.size; rx < point.size; rx++)
+                if ((rx * rx) + (ry * ry) <= point.size * point.size)
+                    colors[(x + rx) + (y + ry) * Width] = point.color;
         }
     }
 
