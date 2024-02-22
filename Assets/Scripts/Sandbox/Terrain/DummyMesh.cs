@@ -6,6 +6,8 @@ public class DummyMesh : TerrainMesh
     public int Width = 640;
     public int Height = 480;
 
+    public Material defaultMat;
+
     public Color32 contourColor = Color.black;
     public Color32[] heightmapColors = { Color.blue, Color.green, Color.red, Color.white };
 
@@ -27,33 +29,45 @@ public class DummyMesh : TerrainMesh
         maxZ;
 
     public int pointSize = 5;
-    public Color32 pointColor = Color.black;
+    public Color32 pointColor = Color.magenta;
     List<Point> points;
 
     public int lineSize = 5;
     public Color32 lineColor = Color.black;
     List<Line> lines;
+    private int lineChange = 1;
 
-    public int polygonSize = 5;
-    public Color32 polygonColor = Color.black;
+    public int polygonSize = 2;
+    public Color32 polygonColor = Color.cyan;
     List<Polygon> polygons;
+    private int polyChange = 1;
 
     void initializeShapes()
     {
         points = new List<Point>();
         points.Add(new Point(new Vector3(0.1f, 0.2f, 0.5f), pointSize, pointColor, "circle"));
+        points.Add(new Point(new Vector3(0.42f, 0.71f, 0.5f), pointSize, pointColor, "square"));
+        points.Add(new Point(new Vector3(0.67f, 0.12f, 0.5f), pointSize, pointColor, "circle"));
 
         lines = new List<Line>();
-        Vector3[] initHandles =
+        Vector3[] initHandlesLine =
         {
             new Vector3(0.2f, 0.6f, 0.5f),
             new Vector3(0.4f, 0.1f, 0.5f),
             new Vector3(0.5f, 0.5f, 0.5f),
             new Vector3(0.9f, 0.35f, 0.5f)
         };
-        lines.Add(new Line(initHandles, lineSize, lineColor, "solid"));
+        lines.Add(new Line(initHandlesLine, lineSize, lineColor, "solid"));
 
         polygons = new List<Polygon>();
+        Vector3[] initHandlesPoly =
+        {
+            new Vector3(0.15f, 0.8f, 0.5f),
+            new Vector3(0.3f, 0.5f, 0.5f),
+            new Vector3(0.65f, 0.6f, 0.5f),
+            new Vector3(0.85f, 0.9f, 0.5f)
+        };
+        polygons.Add(new Polygon(initHandlesPoly, polygonSize, polygonColor, "solid"));
     }
 
     void Start()
@@ -61,7 +75,7 @@ public class DummyMesh : TerrainMesh
         mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-        transform.position = new Vector3(-Width / 2f, -Height / 2f, 0);
+        // transform.position = new Vector3(-Width / 2f, -Height / 2f, 0);
 
         initializeShapes();
 
@@ -147,17 +161,29 @@ public class DummyMesh : TerrainMesh
 
     void drawShapes(ref Color32[] colors)
     {
-        // colors[i] = drawAllPolygons();
+        drawAllPolygons(ref colors);
         drawAllLines(ref colors);
         drawAllPoints(ref colors);
     }
 
-    void drawAllPolygons(ref Color32[] colors) { }
+    void drawAllPolygons(ref Color32[] colors)
+    {
+        if (polyChange == 1)
+        {
+            foreach (var polygon in polygons)
+                renderPolygon(polygon, ref colors);
+            polyChange = 0;
+        }
+    }
 
     void drawAllLines(ref Color32[] colors)
     {
-        foreach (var line in lines)
-            renderLinePath(line, ref colors);
+        if (lineChange == 1)
+        {
+            foreach (var line in lines)
+                renderLinePath(line, ref colors);
+            lineChange = 0;
+        }
     }
 
     void drawAllPoints(ref Color32[] colors)
@@ -166,62 +192,117 @@ public class DummyMesh : TerrainMesh
             renderPoint(point, ref colors);
     }
 
-    void renderLinePath(Line line, ref Color32[] colors)
+    void renderPolygon(Polygon polygon, ref Color32[] colors)
     {
-        for (int i = 0; i < line.handles.Length - 1; i++)
+        GameObject polyPath = new GameObject("polyPath", typeof(LineRenderer));
+        LineRenderer renderer = polyPath.GetComponent<LineRenderer>();
+        renderer.material = defaultMat;
+        renderer.positionCount = polygon.handles.Length;
+        renderer.loop = true;
+
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new GradientColorKey[]
+            {
+                new GradientColorKey(polygon.color, 0.0f),
+                new GradientColorKey(polygon.color, 1.0f)
+            },
+            new GradientAlphaKey[]
+            {
+                new GradientAlphaKey(1.0f, 0.0f),
+                new GradientAlphaKey(1.0f, 1.0f)
+            }
+        );
+        renderer.colorGradient = gradient;
+        renderer.widthMultiplier = polygon.size;
+        for (int i = 0; i < polygon.handles.Length; i++)
         {
-            renderPoint(new Point((Vector3)line.handles[i], 5, Color.red, "circle"), ref colors);
-            renderLineSegment(line.handles[i], line.handles[i + 1], line, ref colors);
+            // renderPoint(new Point((Vector3)polygon.handles[i], 5, polygon.color, "circle"), ref colors);
+            renderer.SetPosition(
+                i,
+                new Vector3(polygon.handles[i].x * Width, 300, -polygon.handles[i].y * Height)
+            );
         }
+        ;
+
+        int[] polygonTriangles = new int[(polygon.handles.Length - 2) * 6];
+        for (int i = 1; i < polygon.handles.Length - 1; i++)
+        {
+            polygonTriangles[(i - 1) * 3 + 2] = i + 1;
+            polygonTriangles[(i - 1) * 3 + 1] = i;
+            polygonTriangles[(i - 1) * 3] = 0;
+            polygonTriangles[(i - 1) * 3] = 0;
+            polygonTriangles[(i - 1) * 3 + 1] = i;
+            polygonTriangles[(i - 1) * 3 + 2] = i + 1;
+        }
+        ;
+        Mesh polygonMesh = new Mesh();
+        Vector3[] polyVerts = new Vector3[polygon.handles.Length];
+        for (int i = 0; i < polygon.handles.Length; i++)
+        {
+            polyVerts[i] = new Vector3(
+                polygon.handles[i].x * Width,
+                301,
+                -polygon.handles[i].y * Height
+            );
+        }
+        ;
+        polygonMesh.vertices = polyVerts;
+        polygonMesh.triangles = polygonTriangles;
+        Color32[] polyCols = new Color32[polygon.handles.Length];
+        for (int i = 0; i < polygon.handles.Length; i++)
+        {
+            polyCols[i] = (new Color32(polygon.color.r, polygon.color.g, polygon.color.b, 130));
+        }
+        ;
+
+        polygonMesh.colors32 = polyCols;
+        GameObject area = new GameObject("polygonMeshObject");
+        MeshFilter meshFilter = area.AddComponent<MeshFilter>();
+        meshFilter.mesh = polygonMesh;
+        polygonMesh.MarkDynamic();
+        MeshRenderer mr = area.AddComponent<MeshRenderer>();
+        mr.material = defaultMat;
     }
 
-    void renderLineSegment(Vector3 A, Vector3 B, Line line, ref Color32[] colors)
+    void renderLinePath(Line line, ref Color32[] colors)
     {
-        Vector2 ptA = new Vector2(Mathf.Round(A.x * Width), Mathf.Round(A.y * Height));
-        Vector2 ptB = new Vector2(Mathf.Round(B.x * Width), Mathf.Round(B.y * Height));
+        GameObject linePath = new GameObject("linePath", typeof(LineRenderer));
+        LineRenderer renderer = linePath.GetComponent<LineRenderer>();
+        renderer.material = defaultMat;
+        renderer.positionCount = line.handles.Length;
 
-        Vector2 left;
-        Vector2 right;
-        if (ptA.x < ptB.x)
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new GradientColorKey[]
+            {
+                new GradientColorKey(line.color, 0.0f),
+                new GradientColorKey(line.color, 1.0f)
+            },
+            new GradientAlphaKey[]
+            {
+                new GradientAlphaKey(1.0f, 0.0f),
+                new GradientAlphaKey(1.0f, 1.0f)
+            }
+        );
+        renderer.colorGradient = gradient;
+        renderer.widthMultiplier = line.size;
+        for (int i = 0; i < line.handles.Length; i++)
         {
-            left = ptA;
-            right = ptB;
-        }
-        else
-        {
-            left = ptB;
-            right = ptA;
-        }
+            renderPoint(new Point((Vector3)line.handles[i], 5, line.color, "circle"), ref colors);
+            // renderLineSegment(line.handles[i], line.handles[i + 1], line, ref colors);
 
-        // line segment of size(width) 1
-        colors[getIndex(left.x, left.y)] = line.color;
-        int prevY = (int)left.y;
-        for (int x = (int)left.x + 1; x < (int)left.x; x++)
-        {
-            if (gradientChange(left, right, x, (float)(prevY + 0.5)) >= 0)
-            {
-                colors[getIndex(x, prevY + 1)] = line.color;
-                prevY++;
-            }
-            else
-            {
-                colors[getIndex(x, prevY)] = line.color;
-            }
+            renderer.SetPosition(
+                i,
+                new Vector3(line.handles[i].x * Width, 300, -line.handles[i].y * Height)
+            );
         }
+        ;
     }
 
     int getIndex(float x, float y)
     {
         return ((int)(x + y * Width));
-    }
-
-    float gradientChange(Vector2 left, Vector2 right, float x, float y)
-    {
-        float slope = (right.y - left.y) / (right.x - left.x);
-        if (slope >= 0)
-            return left.y + slope * (x - left.x) - y;
-        else
-            return -(left.y + slope * (x - left.x) - y);
     }
 
     void renderPoint(Point point, ref Color32[] colors)
@@ -234,11 +315,19 @@ public class DummyMesh : TerrainMesh
 
         if (point.type == "circle")
         {
-            for (int ry = -point.size; ry < point.size; ry++)
-            for (int rx = -point.size; rx < point.size; rx++)
+            for (int ry = -point.size; ry < point.size && (y + ry < Height) && (y + ry > 0); ry++)
+            for (int rx = -point.size; rx < point.size && (x + rx < Width) && (x + rx > 0); rx++)
                 if ((rx * rx) + (ry * ry) <= point.size * point.size)
                     colors[(x + rx) + (y + ry) * Width] = point.color;
         }
+        else if (point.type == "square")
+        {
+            for (int ry = -point.size; ry < point.size && (y + ry < Height) && (y + ry > 0); ry++)
+            for (int rx = -point.size; rx < point.size && (x + rx < Width) && (x + rx > 0); rx++)
+                colors[(x + rx) + (y + ry) * Width] = point.color;
+        }
+
+        // add render code for different primitive shapes
     }
 
     Color32 getVertexColor(float z)
