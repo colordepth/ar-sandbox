@@ -160,6 +160,7 @@ MonoBehaviour:
   - serializedVersion: 2
     rgba: 4294967295
   contourThickness: 0
+  terrainAssistanceAccomodation: 5
   timescale: 1
   minZ: 0
   maxZ: 0
