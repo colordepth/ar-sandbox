@@ -1,0 +1,3 @@
+Orthographic 105.6512
+Position (-236.5, -212.0, -7.9)
+LocalScale (0.9, 1.0, 1.0)

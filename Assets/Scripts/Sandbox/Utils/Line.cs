@@ -4,14 +4,18 @@ using UnityEngine;
 using System;
 
 public class Line {
+	public int id;
 	public Vector3[] handles;
 	public int size;
 	public Color32 color;
-	public string type;
+	public enum Type {
+		SOLID
+	}
+	public Type type;
 	
-	public Line (Vector3[] handles, int size, Color32 color, string type) {
-		this.handles = new Vector3[handles.Length];
-		Array.Copy(handles, this.handles, handles.Length);
+	public Line (int id, Vector3[] handles, int size, Color32 color, Type type) {
+		this.id = id;
+		this.handles = handles;
 		this.size = size;
 		this.color = color;
 		this.type = type;
