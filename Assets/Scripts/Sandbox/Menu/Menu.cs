@@ -15,7 +15,6 @@ public class Menu : MonoBehaviour {
 	public enum Mode {
 		VIEW,
 		DRAW,
-		PC_VISUALIZATION, 	// visualization in PC
 		// VR_VISUALIZATION, 	// visualization in VR
 		// SIMULATION,		// simulation mode in PC
 	}
@@ -24,12 +23,15 @@ public class Menu : MonoBehaviour {
 	public Mode mode;
 	public int isVisualizing;
 	GameObject camera;
+	GameObject visualizationCamera;
 
 	void Start () {
 		page = Page.HOME;
 		mode = Mode.VIEW;
 		isVisualizing = 0;
 		camera = GameObject.Find("Sandbox/Camera");
+		visualizationCamera = GameObject.Find("Sandbox/VisualizationCam");
+		visualizationCamera.GetComponent<Camera>().enabled = false;
 	}
 	
 	void Update () {
@@ -51,8 +53,16 @@ public class Menu : MonoBehaviour {
 			else if (mode == Mode.VIEW) mode = Mode.DRAW;
 		}
 		if (Input.GetKeyDown(KeyCode.Keypad6) || Input.GetKeyDown(KeyCode.Alpha6)){
-			if (isVisualizing == 0) isVisualizing = 1;
-			else isVisualizing = 0;
+			if (isVisualizing == 0) {
+				isVisualizing = 1;
+				visualizationCamera.GetComponent<Camera>().enabled = true;
+				camera.GetComponent<Camera>().enabled = false;
+			}
+			else {
+				isVisualizing = 0;
+				visualizationCamera.GetComponent<Camera>().enabled = false;
+				camera.GetComponent<Camera>().enabled = true;
+			}
 		}
 	}
 

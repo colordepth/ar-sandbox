@@ -4,8 +4,14 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour {
 	
+		Camera camera;
     public float moveSpeed = 5f;
     public float rotationSpeed = 100f;
+
+
+		void Start() {
+ 			camera = GameObject.Find("Sandbox/VisualizationCam").GetComponent<Camera>();
+		}
 
     void Update()
     {
