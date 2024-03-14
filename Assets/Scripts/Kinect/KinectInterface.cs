@@ -9,9 +9,12 @@ public class KinectInterface : MonoBehaviour
 {
     private KinectSensor kinect;
     private DepthFrameReader depthReader;
+    private InfraredFrameReader infraredReader;
 
     [HideInInspector]
     public ushort[] DepthData;
+    [HideInInspector]
+    public ushort[] InfraredData;
 
     public int FrameWidth { get; private set; }
 
@@ -38,7 +41,7 @@ public class KinectInterface : MonoBehaviour
     /// Polls the sensor for the next depth frame.
     /// </summary>
     /// <returns>Whether new data is available.</returns>
-    public bool Poll()
+    public bool PollDepth()
     {
         if (depthReader != null)
         {
@@ -48,6 +51,27 @@ public class KinectInterface : MonoBehaviour
             {
                 depthframe.CopyFrameDataToArray(DepthData);
                 depthframe.Dispose();
+                // Debug.Log(GetMedian(DepthData));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Polls the sensor for the next infrared frame.
+    /// </summary>
+    /// <returns>Whether new data is available.</returns>
+    public bool PollInfrared()
+    {
+        if (infraredReader != null)
+        {
+            InfraredFrame infraredframe = infraredReader.AcquireLatestFrame();
+
+            if (infraredframe != null)
+            {
+                infraredframe.CopyFrameDataToArray(InfraredData);
+                infraredframe.Dispose();
                 // Debug.Log(GetMedian(DepthData));
                 return true;
             }
@@ -82,8 +106,9 @@ public class KinectInterface : MonoBehaviour
         Debug.Log(depthFrameAttribs.DiagonalFieldOfView);
         Debug.Log(depthFrameAttribs.BytesPerPixel);
 
-        // Allocate memory for depth image
+        // Allocate memory for depth and infrared image
         this.DepthData = new ushort[depthFrameAttribs.LengthInPixels];
+        this.InfraredData = new ushort[depthFrameAttribs.LengthInPixels];
 
         print("Kinect found!");
     }
@@ -96,6 +121,9 @@ public class KinectInterface : MonoBehaviour
         {
             depthReader.Dispose();
             depthReader = null;
+
+            infraredReader.Dispose();
+            infraredReader = null;
         }
 
         if (kinect != null)

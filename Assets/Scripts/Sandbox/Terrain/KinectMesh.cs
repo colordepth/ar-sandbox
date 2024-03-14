@@ -34,6 +34,8 @@ public class KinectMesh : TerrainMesh
     private float DepthScalingFactor = -0.5f;
     private float DepthShiftingFactor = -900f;
 
+    KalmanFilterFloat[] depthStatistics;
+
     Vector3[] targetTerrain;
     Mesh mesh;
     Vector3[] vertices;
@@ -225,7 +227,7 @@ public class KinectMesh : TerrainMesh
             initializeMesh();
         }
 
-        if (!iKinect.Poll())
+        if (!iKinect.PollDepth())
             return;
 
         vertices[0].z = (noiseClampMin + noiseClampMax) / 2;
@@ -246,6 +248,9 @@ public class KinectMesh : TerrainMesh
 
                 z += DepthShiftingFactor;
                 z *= DepthScalingFactor;
+
+                z = depthStatistics[i].Update(z);
+
                 if (!lockBoundRange)
                 {
                     minZ = Mathf.Min(z, minZ);
@@ -507,6 +512,8 @@ public class KinectMesh : TerrainMesh
         uv = new Vector2[Width * Height];
         triangles = new int[(Width - 1) * (Height - 1) * 6];
 
+        depthStatistics = new KalmanFilterFloat[Width * Height];
+
         GetComponent<MeshFilter>().mesh = mesh;
         mesh.MarkDynamic();
 
@@ -524,6 +531,9 @@ public class KinectMesh : TerrainMesh
                 float z = (noiseClampMin + noiseClampMax) / 2f;
                 z += DepthShiftingFactor;
                 z *= DepthScalingFactor;
+
+                depthStatistics[i] = new KalmanFilterFloat();
+                z = depthStatistics[i].Update(z);
 
                 vertices[i] = new Vector3(x, y, z);
                 normals[i] = new Vector3(0, 0, 1);
