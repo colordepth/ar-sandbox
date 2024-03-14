@@ -1,3 +1,3 @@
 Orthographic 5
-Position (-132.3, -212.0, -127.8)
+Position (-255.5, -212.0, 0.0)
 LocalScale (1.0, 1.0, 1.0)

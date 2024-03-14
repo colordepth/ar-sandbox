@@ -50,6 +50,11 @@ public class KinectMesh : TerrainMesh
 
     public List<Marker> markers;
 
+    public GameObject prefab_FRIENDLY_SOLDIER;
+    public GameObject prefab_FRIENDLY_TANK;
+    public GameObject prefab_FRIENDLY_JET;
+    public GameObject prefab_HOSTILE_SOLDIER;
+
     public int pointSize = 5;
     public Color32 pointColor = Color.magenta;
     List<Point> points;
@@ -67,6 +72,9 @@ public class KinectMesh : TerrainMesh
     public Color32 polygonColor = Color.cyan;
     List<Polygon> polygons;
     private int polyChange = 1;
+    
+    int wasVisualizing = 0;
+    GameObject objects;
 
     void initializeMarkers() {
       markers = new List<Marker>();
@@ -170,6 +178,22 @@ public class KinectMesh : TerrainMesh
 
     }
 
+    void initializeMarkerObjects () {
+        // objects = new GameObject("Objects");
+        // GameObject sandboxObj = GameObject.Find("Sandbox");
+        // objects.transform.SetParent(sandboxObj);
+        // foreach (Marker marker in markers) {
+        //     if (marker.Type == Marker.Type.FRIENDLY_SOLDIER || marker.Type == Marker.Type.FRIENDLY_JET || marker.Type == Marker.Type.FRIENDLY_TANK || marker.Type == Marker.Type.HOSTILE_SOLDIER) {
+        //         GameObject unit = new GameObject("Unit");
+        //         unit.transform.SetParent(objects);
+        //     }
+        // };
+    }
+
+    void destroyMarkerObjects() {
+        Destroy(objects);
+    }
+
     void Start()
     {
         initializeMarkers();
@@ -238,11 +262,20 @@ public class KinectMesh : TerrainMesh
                 else if (gameMenu.page == Menu.Page.DEPTH) colors[i] = getVertexColorFromGradient(z);
             }
         }
-        if (gameMenu.mode == Menu.Mode.DRAW) drawShapes(ref colors);
+        if (gameMenu.isDrawing == 1) drawShapes(ref colors);
 
-        mesh.vertices = vertices;
-        mesh.colors32 = colors;
-        mesh.RecalculateNormals();
+        if (gameMenu.isVisualizing == 0) {
+            mesh.vertices = vertices;
+            mesh.colors32 = colors;
+            mesh.RecalculateNormals();
+        }
+
+        if (wasVisualizing == 0 && gameMenu.isVisualizing == 1) {
+            initializeMarkerObjects();
+        } else if (wasVisualizing == 1 && gameMenu.isVisualizing == 0) {
+            destroyMarkerObjects();
+        }
+        wasVisualizing = gameMenu.isVisualizing;
     }
 
     void terrainAssistance(

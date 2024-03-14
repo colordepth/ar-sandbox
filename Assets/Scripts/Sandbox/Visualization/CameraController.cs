@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour {
 	
-		Camera camera;
+    Camera camera;
     public float moveSpeed = 5f;
     public float rotationSpeed = 100f;
+    public float speedMultiplier = 4f;
+    public float yAxisInput = 0;
 
 
-		void Start() {
- 			camera = GameObject.Find("Sandbox/VisualizationCam").GetComponent<Camera>();
-		}
+    void Start() {
+        camera = GameObject.Find("Sandbox/VisualizationCam").GetComponent<Camera>();
+    }
 
     void Update()
     {
@@ -25,8 +27,20 @@ public class CameraController : MonoBehaviour {
         // Get the direction of the mouse pointer
         Vector3 mouseDirection = GetMouseDirection();
 
+        if (Input.GetKey(KeyCode.LeftShift)) speedMultiplier = 4f;
+        else speedMultiplier = 1f;
+
+        if (Input.GetKey(KeyCode.Space)) {
+            yAxisInput = 1;
+        } else if (Input.GetKey(KeyCode.LeftControl)) {
+            yAxisInput = -1;
+        } else {
+            yAxisInput = 0;
+        }
+
         // Move the camera
-        transform.Translate((mouseDirection * verticalInput + transform.right * horizontalInput) * moveSpeed * Time.deltaTime, Space.World);
+        transform.Translate((mouseDirection * verticalInput + transform.right * horizontalInput) * moveSpeed * speedMultiplier * Time.deltaTime, Space.World);
+        transform.Translate(transform.up * yAxisInput * moveSpeed * Time.deltaTime, Space.World);
 
         // Rotate the camera based on mouse input
         float mouseX = Input.GetAxis("Mouse X") * rotationSpeed * Time.deltaTime;

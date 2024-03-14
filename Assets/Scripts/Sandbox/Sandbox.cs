@@ -10,7 +10,7 @@ public class Sandbox : MonoBehaviour
     private TerrainMesh terrainmesh;
     string fileName = "CalibrationConfig.txt";
     StreamWriter stream;
-    int mapMovement = 1;
+    public int mapMovement = 1;
 
     void Start ()
     {
