@@ -51,7 +51,7 @@ public class KinectInterface : MonoBehaviour
             {
                 depthframe.CopyFrameDataToArray(DepthData);
                 depthframe.Dispose();
-                // Debug.Log(GetMedian(DepthData));
+                //Debug.Log(GetMedian(DepthData));
                 return true;
             }
         }
@@ -72,7 +72,7 @@ public class KinectInterface : MonoBehaviour
             {
                 infraredframe.CopyFrameDataToArray(InfraredData);
                 infraredframe.Dispose();
-                // Debug.Log(GetMedian(DepthData));
+                //Debug.Log("Median " + GetMedian(InfraredData));
                 return true;
             }
         }
@@ -96,6 +96,7 @@ public class KinectInterface : MonoBehaviour
             kinect.Open();
 
         depthReader = kinect.DepthFrameSource.OpenReader();
+        infraredReader = kinect.InfraredFrameSource.OpenReader();
 
         FrameDescription depthFrameAttribs = depthReader.DepthFrameSource.FrameDescription;
         this.FrameWidth = depthFrameAttribs.Width;
@@ -108,7 +109,9 @@ public class KinectInterface : MonoBehaviour
 
         // Allocate memory for depth and infrared image
         this.DepthData = new ushort[depthFrameAttribs.LengthInPixels];
-        this.InfraredData = new ushort[depthFrameAttribs.LengthInPixels];
+
+        FrameDescription infraredFrameAttribs = infraredReader.InfraredFrameSource.FrameDescription;
+        this.InfraredData = new ushort[infraredFrameAttribs.LengthInPixels];
 
         print("Kinect found!");
     }

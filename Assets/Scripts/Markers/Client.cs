@@ -5,6 +5,13 @@ using System.Collections.Generic;
 using System;
 using UnityEngine.Networking;
 
+[Serializable]
+public class JsonData
+{
+    public int[] label;
+    public int[] x_pos;
+    public int[] y_pos;
+}
 public class Client : MonoBehaviour
 {
     private string serverURL = "http://localhost:3000/upload";
@@ -12,6 +19,12 @@ public class Client : MonoBehaviour
     private int imageHeight = 480;
     private int imageChannels = 3;
     private KinectInterface iKinect;
+
+    public int[] xPos;
+    public int[] yPos;
+    public int[] labels;
+
+    public enum MarkerType { Outlier_M, Circle_M, Square_M, RollingPin_M, Soldier_M, Devil_M, Plane_M, Tank_M, Fingertip_M }
 
     void Start()
     {
@@ -32,15 +45,26 @@ public class Client : MonoBehaviour
             if (!iKinect)
                 yield break;
 
-            iKinect.PollInfrared();
+            if (!iKinect.PollInfrared())
+                continue;
+
+            //byte[] imageBytes = new byte[imageWidth * imageHeight];
+            //Buffer.BlockCopy(iKinect.InfraredData, 0, imageBytes, 0, iKinect.InfraredData.Length);
+
 
             Texture2D texture = new Texture2D(imageWidth, imageHeight, TextureFormat.RGB24, false);
+            Color32[] pixels = new Color32[imageWidth * imageHeight];
 
-            byte[] imageBytes = new byte[imageWidth * imageHeight];
-            Buffer.BlockCopy(iKinect.InfraredData, 0, imageBytes, 0, iKinect.InfraredData.Length);
-            texture.LoadImage(imageBytes);
+            print("Compare: " + (imageWidth * imageHeight) + " " + iKinect.InfraredData.Length);
 
-            // Convert Texture2D to byte array
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                //byte colorVal = (byte)(iKinect.InfraredData[i]/255);
+                //pixels[i] = new Color32(colorVal, colorVal, colorVal, 255);
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply();
+
             byte[] imageData = texture.EncodeToPNG();
 
             // Create a form with image data
@@ -50,26 +74,26 @@ public class Client : MonoBehaviour
             // Send the POST request
             using (UnityWebRequest www = UnityWebRequest.Post(serverURL, form))
             {
-                //yield return www.SendWebRequest();
-                www.SendWebRequest();
+                yield return www.SendWebRequest();
 
                 // Parse JSON response
                 string jsonResponse = www.downloadHandler.text;
 
-                print(jsonResponse);
+                JsonData data = JsonUtility.FromJson<JsonData>(jsonResponse);
 
-                yield return jsonResponse;
-                //List<Dictionary<string, float>> resultList = JsonUtility.FromJson<List<Dictionary<string, float>>>(jsonResponse);
+                labels = data.label;
+                xPos = data.x_pos;
+                yPos = data.y_pos;
 
-                //// Access age and weight values from the resultList
-                //foreach (var result in resultList)
-                //{
-                //    float age = result["age"];
-                //    float weight = result["weight"];
 
-                //    // Do something with age and weight values
-                //    Debug.Log("Age: " + age + ", Weight: " + weight);
-                //}
+                for (int i = 0; i < xPos.Length; i++)
+                {
+                    int x_pos = xPos[i];
+                    int y_pos = yPos[i];
+                    int label = labels[i];
+
+                    print(x_pos + " _ " + y_pos + " _ " + label);
+                }
             }
         }
     }
