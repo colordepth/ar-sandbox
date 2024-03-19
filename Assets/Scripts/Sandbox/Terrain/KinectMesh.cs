@@ -6,6 +6,8 @@ public class KinectMesh : TerrainMesh
 {
     private KinectInterface iKinect;
 
+    private Client markerDetector;
+
     public Material defaultMat;
     private Menu gameMenu;
 
@@ -28,6 +30,8 @@ public class KinectMesh : TerrainMesh
 
     public Color32 contourColor = Color.black;
     public Color32[] heightmapColors = { Color.blue, Color.green, Color.red, Color.white };
+
+    public Color32[] markerColors = { Color.blue, Color.green, Color.red, Color.white, Color.magenta, Color.yellow, Color.cyan, Color.gray };
 
     [Range(0, 1)]
     public float contourThickness = .15f;
@@ -210,6 +214,8 @@ public class KinectMesh : TerrainMesh
             Debug.Log("KinectInterface not found!");
             return;
         }
+
+        markerDetector = iKinect.GetComponentInChildren<Client>();
     }
 
     void Update()
@@ -219,8 +225,8 @@ public class KinectMesh : TerrainMesh
 
         if (width == -1 || height == -1)
         {
-            width = iKinect.FrameWidth;
-            height = iKinect.FrameHeight;
+            width = iKinect.DepthFrameWidth;
+            height = iKinect.DepthFrameHeight;
             transform.position = new Vector3(-Width / 2f, -Height / 2f, 0);
 
             Debug.Log("Initializing mesh with resolution: " + width + " " + height);
@@ -264,7 +270,18 @@ public class KinectMesh : TerrainMesh
 
                 vertices[i].z = z;
                 if (gameMenu.page == Menu.Page.ASSIST) terrainAssistance(ref colors, ref vertices, targetTerrain, i, Mathf.Min(targetMinZ, minZ), Mathf.Max(targetMaxZ, maxZ));
-                else if (gameMenu.page == Menu.Page.DEPTH) colors[i] = getVertexColorFromGradient(z);
+                else if (gameMenu.page == Menu.Page.DEPTH)
+                {
+                    colors[i] = getVertexColorFromGradient(z);
+                    for (int m = 0; m < markerDetector.labels.Length; m++)
+                    {
+                        if ((x - markerDetector.xPos[m])*(x - markerDetector.xPos[m]) + (y - markerDetector.yPos[m])*(y - markerDetector.yPos[m]) < 100)
+                        {
+                            colors[i] = markerColors[(markerDetector.labels[m]-1)%markerColors.Length];
+                            break;
+                        }
+                    }
+                }
             }
         }
         if (gameMenu.isDrawing == 1) drawShapes(ref colors);

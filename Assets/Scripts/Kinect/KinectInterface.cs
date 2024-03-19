@@ -16,9 +16,11 @@ public class KinectInterface : MonoBehaviour
     [HideInInspector]
     public ushort[] InfraredData;
 
-    public int FrameWidth { get; private set; }
+    public int DepthFrameWidth { get; private set; }
+    public int DepthFrameHeight { get; private set; }
 
-    public int FrameHeight { get; private set; }
+    public int InfraredFrameWidth { get; private set; }
+    public int InfraredFrameHeight { get; private set; }
 
     public static double GetMedian(ushort[] sourceNumbers)
     {
@@ -98,19 +100,27 @@ public class KinectInterface : MonoBehaviour
         depthReader = kinect.DepthFrameSource.OpenReader();
         infraredReader = kinect.InfraredFrameSource.OpenReader();
 
+        FrameDescription infraredFrameAttribs = depthReader.DepthFrameSource.FrameDescription;
+        this.InfraredFrameWidth = infraredFrameAttribs.Width;
+        this.InfraredFrameHeight = infraredFrameAttribs.Height;
+
+        Debug.Log(infraredFrameAttribs.HorizontalFieldOfView);
+        Debug.Log(infraredFrameAttribs.VerticalFieldOfView);
+        Debug.Log(infraredFrameAttribs.DiagonalFieldOfView);
+        Debug.Log(infraredFrameAttribs.BytesPerPixel);
+
         FrameDescription depthFrameAttribs = depthReader.DepthFrameSource.FrameDescription;
-        this.FrameWidth = depthFrameAttribs.Width;
-        this.FrameHeight = depthFrameAttribs.Height;
+        this.DepthFrameWidth = depthFrameAttribs.Width;
+        this.DepthFrameHeight = depthFrameAttribs.Height;
 
         Debug.Log(depthFrameAttribs.HorizontalFieldOfView);
         Debug.Log(depthFrameAttribs.VerticalFieldOfView);
         Debug.Log(depthFrameAttribs.DiagonalFieldOfView);
         Debug.Log(depthFrameAttribs.BytesPerPixel);
 
+
         // Allocate memory for depth and infrared image
         this.DepthData = new ushort[depthFrameAttribs.LengthInPixels];
-
-        FrameDescription infraredFrameAttribs = infraredReader.InfraredFrameSource.FrameDescription;
         this.InfraredData = new ushort[infraredFrameAttribs.LengthInPixels];
 
         print("Kinect found!");
